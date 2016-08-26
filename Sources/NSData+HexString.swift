@@ -12,55 +12,74 @@
 
 import Foundation
 
-extension NSData {
+extension Data {
   public func toHexString () -> String? {
 
-    let buffer = UnsafePointer<UInt8>(self.bytes)
-    if self.length == 0 {
-      return nil
-    }
-    
     var hexadecimalString = ""
-    for i in 0..<self.length {
-      hexadecimalString += String(format: "%02x", buffer.advanced(by: i).pointee)
-    }
+    self.forEach {ui in hexadecimalString += String(format: "%02X", ui)}
     return hexadecimalString
   }
 }
 
 extension String {
   
-  /// Create NSData from hexadecimal string representation
+  /// Create Data from hexadecimal string representation
   ///
-  /// This takes a hexadecimal representation and creates a NSData object. Note, if the string has any spaces or non-hex characters (e.g. starts with '<' and with a '>'), those are ignored and only hex characters are processed.
-  ///
-  /// The use of `strtoul` inspired by Martin R at [http://stackoverflow.com/a/26284562/1271826](http://stackoverflow.com/a/26284562/1271826)
-  ///
-  /// - returns: NSData represented by this hexadecimal string.
+  /// This takes a hexadecimal representation and creates a Data object. http://codereview.stackexchange.com/questions/135424/hex-string-to-bytes-nsdata  ///
+  /// - returns: Data represented by this hexadecimal string or nil.
   
-  func toNSData() -> NSData? {
-    let data = NSMutableData(capacity: characters.count / 2)
-    
-    let regex = try! NSRegularExpression(pattern: "[0-9a-f]{1,2}", options: .caseInsensitive)
-    regex.enumerateMatches(in: self, options: [], range: NSMakeRange(0, characters.count)) { match, flags, stop in
-      let byteString = NSString(string: self).substring(with: match!.range)
-      let num = UInt8(byteString.withCString { strtoul($0, nil, 16) })
-      data?.append([num], length: 1)
+  public func toData() -> Data? {
+    // Convert 0 ... 9, a ... f, A ...F to their decimal value,
+    // return nil for all other input characters
+    func decodeNibble(_ u: UInt16) -> UInt8? {
+      switch(u) {
+      case 0x30 ... 0x39:
+        return UInt8(u - 0x30)
+      case 0x41 ... 0x46:
+        return UInt8(u - 0x41 + 10)
+      case 0x61 ... 0x66:
+        return UInt8(u - 0x61 + 10)
+      default:
+        return nil
+      }
     }
     
+    let utf16 = self.utf16
+    var data = Data(capacity: utf16.count/2)
+    
+    var i = utf16.startIndex
+    while i != utf16.endIndex {
+      guard let hi = decodeNibble(utf16[i]),
+        let nxt = utf16.index(i, offsetBy:1, limitedBy: utf16.endIndex),
+        let lo = decodeNibble(utf16[nxt])
+        else {
+          return nil
+      }
+#if os(Linux)
+      var value = hi << 4 + lo
+      let buffer = UnsafeBufferPointer(start: &value, count:1)
+      data!.append(buffer)
+#else
+      let value = hi << 4 + lo
+      data.append(value)
+#endif
+      
+      guard let next = utf16.index(i, offsetBy:2, limitedBy: utf16.endIndex) else {
+        break
+      }
+      i = next
+    }
+
     return data
   }
 
   public func toByteArray() -> Array<UInt8>? {
-    //let data = NSMutableData(capacity: characters.count / 2)
-    
-    var array = [UInt8]()
-    let regex = try! NSRegularExpression(pattern: "[0-9a-f]{1,2}", options: .caseInsensitive)
-    regex.enumerateMatches(in: self, options: [], range: NSMakeRange(0, characters.count)) { match, flags, stop in
-      let byteString = NSString(string: self).substring(with: match!.range)
-      let num = UInt8(byteString.withCString { strtoul($0, nil, 16) })
-      array.append(num)
+    guard let data = self.toData() else {
+      return nil
     }
+    let array = data.filter { (u) -> Bool in
+        return true
+      }
     return array
   }
 }
