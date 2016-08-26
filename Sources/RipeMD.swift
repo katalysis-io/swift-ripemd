@@ -37,10 +37,12 @@ public struct RIPEMD {
     var paddedData = data
     
     // Put 0x80 after the last character:
-    //let stop: [UInt8] = [UInt8(0x80)] // 2^8
-    //paddedData.append(stop, count: 1)
-    paddedData.append(0x80)
-    
+    #if os(Linux)
+      let stop: [UInt8] = [UInt8(0x80)] // 2^8
+      paddedData.append(stop, count: 1)
+    #else
+      paddedData.append(0x80)
+    #endif
     // Pad with zeros until there are 64 * k - 8 bytes.
     var numberOfZerosToPad: Int;
     if paddedData.count % 64 == 56 {
