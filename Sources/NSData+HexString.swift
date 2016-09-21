@@ -58,7 +58,7 @@ extension String {
 #if os(Linux)
       var value = hi << 4 + lo
       let buffer = UnsafeBufferPointer(start: &value, count:1)
-      data!.append(buffer)
+      data.append(buffer)
 #else
       let value = hi << 4 + lo
       data.append(value)
