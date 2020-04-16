@@ -1,0 +1,16 @@
+{
+  "object": {
+    "pins": [
+      {
+        "package": "HexString",
+        "repositoryURL": "https://gitlab.com/katalysis/open-source/HexString.git",
+        "state": {
+          "branch": null,
+          "revision": "54de8d482548e326a3e8782e71d1e1db18b31973",
+          "version": "0.2.2"
+        }
+      }
+    ]
+  },
+  "version": 1
+}
