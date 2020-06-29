@@ -14,9 +14,8 @@ let package = Package(
     .library(name: "RipeMD", targets: ["RipeMD"])
     ],
   dependencies: [
-    .package(url: "https://github.com/katalysis-io/swift-hex-string.git", from: "0.4.0"),
     ],
   targets: [
-    .target(name: "RipeMD", dependencies: ["HexString"], path: ".", sources: ["Sources"]),
+    .target(name: "RipeMD", dependencies: [], path: ".", sources: ["Sources"]),
     ]
 )
